@@ -8,10 +8,10 @@ import scala.util.Random
 package object oomagnitude {
   type PermanenceFunction = (Double, Boolean) => Double
 
-  val SensorGeometry = Geometry(10,10)
+  val SensorGeometry = Geometry(3,10)
   val LayerGeometry = Geometry(32,32)
   val InitialModel = Model(Layer.withRandomConnections(LayerGeometry, SensorGeometry, connectionProbability = 0.20),
-    new GlobalInhibition(maxWinners = 5), List.empty)
+    new GlobalInhibition(maxWinners = 3), List.empty)
   val random = new Random()
   val LetterEncodings = ('a' to 'z').zip(random.shuffle(SensorGeometry.coordinates)).toMap
   val CoordinateToLetter = LetterEncodings.map(_.swap)
@@ -35,8 +35,8 @@ package object oomagnitude {
 
   def inferWord(word: String, model: Model) = {
     val newModel = model.processInput(sdrForWord(word))
-    val allChars = newModel.winners.flatMap(c => charsForDendrite(c, newModel)).toSet
-    val words = allChars.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b))
+    val allChars = newModel.winners.map(c => charsForDendrite(c, newModel))
+    val words = allChars.flatMap(cs => cs.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b))).toSet
     words.foreach(println)
   }
 

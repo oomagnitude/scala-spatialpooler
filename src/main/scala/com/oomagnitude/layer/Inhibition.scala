@@ -18,6 +18,7 @@ class GlobalInhibition(maxWinners: Int) extends Inhibition {
   import Inhibition._
 
   override def compete(overlaps: Iterable[Overlap]): Iterable[Coordinate] = {
+//    println(overlaps.toList.sorted(MaxOverlapOrdering).take(maxWinners))
     overlaps.toList.sorted(MaxOverlapOrdering).take(maxWinners).map(_.address)
   }
 }

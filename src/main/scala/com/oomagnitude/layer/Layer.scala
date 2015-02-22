@@ -8,7 +8,6 @@ import scala.util.Random
 
 object Layer {
   val PermanenceThreshold = 1.0
-  val InitialPermanence = 0.7
 
   val adjustPermanence: PermanenceFunction = {(permanence, isOverlapping) =>
     val sign = if (isOverlapping) 1.0 else -1.0
@@ -21,7 +20,9 @@ object Layer {
     val connectionsPerDendrite = (sensorGeometry.coordinates.size * connectionProbability).toInt
 
     def initialConnections: Map[Coordinate, Double] = {
-      random.shuffle(sensorGeometry.coordinates).take(connectionsPerDendrite).map(c => c -> InitialPermanence).toMap
+      random.shuffle(sensorGeometry.coordinates).take(connectionsPerDendrite).map {
+        c => c -> (PermanenceThreshold + random.nextGaussian())
+      }.toMap
     }
 
     val dendrites = Grid.create(layerGeometry, {coordinate => Dendrite(coordinate, initialConnections, PermanenceThreshold, adjustPermanence)})
