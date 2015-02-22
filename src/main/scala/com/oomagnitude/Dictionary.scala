@@ -12,7 +12,7 @@ object Dictionary {
     .resolve("google-10000-english.txt").toAbsolutePath.toString
 
   // Take the first 1,000 most common English words
-  val Words = Source.fromFile(DictionaryPath).getLines().take(1000).toIterable
+  val Words = Source.fromFile(DictionaryPath).getLines().take(1000).toList
 
   // For each character, the set of all words the character appears in
   val ReverseIndex = Words

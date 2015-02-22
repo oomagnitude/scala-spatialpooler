@@ -1,6 +1,6 @@
 package com.oomagnitude
 
-case class Overlap(dendriteIndex: Int, permanentOverlap: Int, rawOverlap: Int, weightedOverlap: Double)
+case class Overlap(dendriteIndex: Int, permanentOverlap: Int, weightedOverlap: Double)
 
 case class Dendrite(index: Int, synapses: Map[Int, Double],
                     permanenceThreshold: Double,
@@ -16,9 +16,10 @@ case class Dendrite(index: Int, synapses: Map[Int, Double],
 
   def overlap(input: Set[Int]) = {
     val permanentOverlap = permanentSynapses.filterKeys(input.contains)
-    Overlap(index, permanentOverlap = permanentOverlap.size,
-      rawOverlap = synapses.count(kv => input.contains(kv._1)),
-      weightedOverlap = permanentOverlap.values.sum)
+    val weightedOverlap =
+      if (permanentSynapses.nonEmpty) permanentOverlap.values.sum * permanentOverlap.size / permanentSynapses.size
+      else 0.0
+    Overlap(index, permanentOverlap = permanentOverlap.size, weightedOverlap = weightedOverlap)
   }
 
 }

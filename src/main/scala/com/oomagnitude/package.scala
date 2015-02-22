@@ -6,20 +6,17 @@ package object oomagnitude {
   type PermanenceFunction = (Double, Boolean) => Double
 
   val SensorSize = 30
-  val LayerSize = 1024
-  val InitialModel = Model(Layer.withRandomConnections(LayerSize, SensorSize, connectionProbability = 0.20),
+  val LayerSize = 2048
+  val InitialModel = Model(Layer.withRandomConnections(LayerSize, SensorSize, connectionProbability = 0.40),
     new GlobalInhibition(maxWinners = 1), List.empty)
   val random = new Random()
   val LetterEncodings = ('a' to 'z').zip(random.shuffle((0 until SensorSize).toList)).toMap
   val CoordinateToLetter = LetterEncodings.map(_.swap)
 
   def train: Model = {
-    var model = InitialModel
-    for {
-      i <- 1 to 20
-      word <- Dictionary.Words
-    } {model = model.processInput(sdrForWord(word))}
-    model
+    Stream.continually(Dictionary.Words).flatten.take(20000).foldLeft(InitialModel) {
+      (model, word) => model.processInput(sdrForWord(word))
+    }
   }
 
   private def sdrForWord(word: String): Set[Int] = {

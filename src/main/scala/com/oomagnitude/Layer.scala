@@ -33,7 +33,7 @@ case class Layer(dendrites: IndexedSeq[Dendrite]) {
     dendrites.map {
       dendrite =>
         dendrite.overlap(input)
-    }.filter(_.rawOverlap > 0)
+    }.filter(_.permanentOverlap > 0)
   }
 
   def learn(learners: Iterable[Int], input: Set[Int]): Layer = {
