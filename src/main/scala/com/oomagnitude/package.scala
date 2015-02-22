@@ -11,7 +11,7 @@ package object oomagnitude {
   val SensorGeometry = Geometry(3,10)
   val LayerGeometry = Geometry(32,32)
   val InitialModel = Model(Layer.withRandomConnections(LayerGeometry, SensorGeometry, connectionProbability = 0.20),
-    new GlobalInhibition(maxWinners = 3), List.empty)
+    new GlobalInhibition(maxWinners = 2), List.empty)
   val random = new Random()
   val LetterEncodings = ('a' to 'z').zip(random.shuffle(SensorGeometry.coordinates)).toMap
   val CoordinateToLetter = LetterEncodings.map(_.swap)
