@@ -1,19 +1,16 @@
 package com
 
-import com.oomagnitude.geometry.{Coordinate, Geometry}
-import com.oomagnitude.layer.{GlobalInhibition, Layer}
-
 import scala.util.Random
 
 package object oomagnitude {
   type PermanenceFunction = (Double, Boolean) => Double
 
-  val SensorGeometry = Geometry(3,10)
-  val LayerGeometry = Geometry(32,32)
-  val InitialModel = Model(Layer.withRandomConnections(LayerGeometry, SensorGeometry, connectionProbability = 0.20),
-    new GlobalInhibition(maxWinners = 2), List.empty)
+  val SensorSize = 30
+  val LayerSize = 1024
+  val InitialModel = Model(Layer.withRandomConnections(LayerSize, SensorSize, connectionProbability = 0.20),
+    new GlobalInhibition(maxWinners = 1), List.empty)
   val random = new Random()
-  val LetterEncodings = ('a' to 'z').zip(random.shuffle(SensorGeometry.coordinates)).toMap
+  val LetterEncodings = ('a' to 'z').zip(random.shuffle((0 until SensorSize).toList)).toMap
   val CoordinateToLetter = LetterEncodings.map(_.swap)
 
   def train: Model = {
@@ -21,14 +18,11 @@ package object oomagnitude {
     for {
       i <- 1 to 20
       word <- Dictionary.Words
-    } {
-      val input = sdrForWord(word)
-      model = model.processInput(input)
-    }
+    } {model = model.processInput(sdrForWord(word))}
     model
   }
 
-  private def sdrForWord(word: String): Set[Coordinate] = {
+  private def sdrForWord(word: String): Set[Int] = {
     val uniqueChars = word.toLowerCase.toCharArray.toSet
     uniqueChars.collect {case char if LetterEncodings.contains(char) => LetterEncodings(char)}
   }
@@ -37,10 +31,10 @@ package object oomagnitude {
     val newModel = model.processInput(sdrForWord(word))
     val allChars = newModel.winners.map(c => charsForDendrite(c, newModel))
     val words = allChars.flatMap(cs => cs.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b))).toSet
-    words.foreach(println)
+    words.toList.sortBy(_.length).foreach(println)
   }
 
-  private def charsForDendrite(dendriteAddress: Coordinate, model: Model): Iterable[Char] = {
-    model.layer.dendrites(dendriteAddress).permanentSynapses.keys.map(CoordinateToLetter)
+  private def charsForDendrite(dendriteIndex: Int, model: Model): Iterable[Char] = {
+    model.layer.dendrites(dendriteIndex).permanentSynapses.keys.map(CoordinateToLetter)
   }
 }

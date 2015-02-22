@@ -7,17 +7,6 @@ allprojects {
     // TODO: remove once IDEA or Gradleware fixes
     sourceCompatibility = '1.7'
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        maven {
-            url "http://repo.typesafe.com/typesafe/releases/"
-        }
-        maven {
-            url "https://oss.sonatype.org/content/repositories/releases/"
-        }
-    }
-
     publishing {
         publications {
             mavenJava(MavenPublication) {
