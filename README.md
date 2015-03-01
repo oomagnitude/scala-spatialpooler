@@ -11,7 +11,7 @@ inferWord("the", model)
 
 ## Run the REPL using Gradle
 
-Build the cla project:
+Build the project:
 
 `./gradlew clean build test`
 
