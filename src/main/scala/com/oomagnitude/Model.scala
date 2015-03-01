@@ -13,7 +13,7 @@ case class Model(layer: Layer, inhibition: Inhibition, winners: Iterable[Int]) {
    * Process an input from the layer's sensor by:
    * 1. Computing overlap to input
    * 2. Running the inhibition race
-   * 3. Learning the input from winning dendrites
+   * 3. Learning the input from winning poolers
    *
    * @param input the input to process
    * @return the new model state, after inhibition

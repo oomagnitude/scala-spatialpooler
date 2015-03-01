@@ -5,7 +5,7 @@ import scala.util.Random
 package object oomagnitude {
   /**
    * Function that adjusts permanence. Takes in current permanence value as first input, and boolean indicating whether
-   * or not the synapse overlaps as the second. The function is expected to return the adjusted permanence value.
+   * or not the connection overlaps as the second. The function is expected to return the adjusted permanence value.
    */
   type PermanenceFunction = (Double, Boolean) => Double
 
@@ -35,6 +35,11 @@ package object oomagnitude {
   val LetterEncodings = ('a' to 'z').zip(random.shuffle((0 until SensorSize).toList)).toMap
 
   /**
+   * Encodes letters in a word as an SDR
+   */
+  val WordEncoder = new WordEncoder(LetterEncodings)
+
+  /**
    * Reverse mapping of coordinates to letters
    */
   val CoordinateToLetter = LetterEncodings.map(_.swap)
@@ -47,43 +52,31 @@ package object oomagnitude {
    */
   def train(numIterations: Int): Model = {
     Stream.continually(Dictionary.Words).flatten.take(numIterations).foldLeft(InitialModel) {
-      (model, word) => model.processInput(encodeWord(word))
+      (model, word) => model.processInput(WordEncoder.encode(word))
     }
-  }
-
-  /**
-   * Encode a word as a set of inputs to the sensor. Takes each letter, maps it to an index for the sensor and
-   * returns the result as a set.
-   * 
-   * @param word the word to encode
-   * @return the unique set of sensor indexes for the word
-   */
-  private def encodeWord(word: String): Set[Int] = {
-    val uniqueChars = word.toLowerCase.toCharArray.toSet
-    uniqueChars.collect {case char if LetterEncodings.contains(char) => LetterEncodings(char)}
   }
 
   /**
    * Given a set of letters, infer which words contain those letters using the model.
    *
    * @param letters the letters for which to infer words
-   * @param model the model containing the layer and dendrites
+   * @param model the model containing the layer and poolers
    */
   def inferWord(letters: String, model: Model) = {
-    val newModel = model.processInput(encodeWord(letters))
-    val allChars = newModel.winners.map(c => charsForDendrite(c, newModel))
+    val newModel = model.processInput(WordEncoder.encode(letters))
+    val allChars = newModel.winners.map(c => charsForPooler(c, newModel))
     val words = allChars.flatMap(cs => cs.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b))).toSet
     words.toList.sortBy(_.length).foreach(println)
   }
 
   /**
-   * Determine which characters a dendrite has permanent connections to
+   * Determine which characters a pooler has permanent connections to
    *
-   * @param dendriteIndex the index for the dendrite
-   * @param model the model containing the dendrite
-   * @return all characters in the sensors that the dendrite has a permanent synapse to
+   * @param poolerIndex the index for the pooler
+   * @param model the model containing the pooler
+   * @return all characters in the sensors that the pooler has a permanent connection to
    */
-  private def charsForDendrite(dendriteIndex: Int, model: Model): Iterable[Char] = {
-    model.layer.dendrites(dendriteIndex).permanentSynapses.keys.map(CoordinateToLetter)
+  private def charsForPooler(poolerIndex: Int, model: Model): Iterable[Char] = {
+    model.layer.poolers(poolerIndex).permanentConnections.keys.map(CoordinateToLetter)
   }
 }
