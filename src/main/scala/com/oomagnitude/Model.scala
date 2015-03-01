@@ -23,8 +23,10 @@ case class Model(layers: List[Layer], inhibition: Inhibition) {
       layer =>
         val overlaps = layer.overlap(layerInput)
         val inhibitionWinners = inhibition.compete(overlaps)
+        val newLayer = layer.learn(inhibitionWinners, layerInput)
+        
         layerInput = inhibitionWinners
-        layer.learn(inhibitionWinners, input)
+        newLayer
     })
   }
 }
