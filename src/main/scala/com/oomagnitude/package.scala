@@ -24,8 +24,8 @@ package object oomagnitude {
   /**
    * Initial model with randomly initialized connections
    */
-  val InitialModel = Model(Layer.withRandomConnections(LayerSize, SensorSize, connectionProbability = 0.40),
-    new GlobalInhibition(maxWinners = 1), List.empty)
+  val InitialModel = Model(List(Layer.withRandomConnections(LayerSize, SensorSize, connectionProbability = 0.40)),
+    new GlobalInhibition(maxWinners = 1))
   
   val random = new Random()
 
@@ -64,7 +64,7 @@ package object oomagnitude {
    */
   def inferWord(letters: String, model: Model) = {
     val newModel = model.processInput(WordEncoder.encode(letters))
-    val allChars = newModel.winners.map(c => charsForPooler(c, newModel))
+    val allChars = newModel.layers(0).active.map(c => charsForPooler(c, newModel))
     val words = allChars.flatMap(cs => cs.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b))).toSet
     words.toList.sortBy(_.length).foreach(println)
   }
@@ -77,6 +77,6 @@ package object oomagnitude {
    * @return all characters in the sensors that the pooler has a permanent connection to
    */
   private def charsForPooler(poolerIndex: Int, model: Model): Iterable[Char] = {
-    model.layer.poolers(poolerIndex).permanentConnections.keys.map(CoordinateToLetter)
+    model.layers(0).poolers(poolerIndex).permanentConnections.keys.map(CoordinateToLetter)
   }
 }

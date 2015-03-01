@@ -39,7 +39,7 @@ object Layer {
       index <- 0 until layerSize
     } yield Pooler(index, initialConnections, PermanenceThreshold, adjustPermanence)
 
-    Layer(poolers)
+    Layer(poolers, Set.empty)
   }
 }
 
@@ -47,8 +47,9 @@ object Layer {
  * Construct for an ensemble of poolers that mutually compete in the inhibition race
  *
  * @param poolers the poolers in this layer
+ * @param active the poolers that are presently active. These are the ones that won the latest inhibition race
  */
-case class Layer(poolers: IndexedSeq[Pooler]) {
+case class Layer(poolers: IndexedSeq[Pooler], active: Set[Int]) {
 
   /**
    * Compute overlaps for all poolers in this layer
@@ -70,8 +71,8 @@ case class Layer(poolers: IndexedSeq[Pooler]) {
    * @param input the input to learn
    * @return the new layer state after learning
    */
-  def learn(learners: Iterable[Int], input: Set[Int]): Layer = {
-    this.copy(poolers = learners.foldLeft(poolers) {
+  def learn(learners: Set[Int], input: Set[Int]): Layer = {
+    this.copy(active = learners, poolers = learners.foldLeft(poolers) {
       (ps, poolerIndex) =>
         ps.updated(poolerIndex, ps(poolerIndex).learn(input))
     })

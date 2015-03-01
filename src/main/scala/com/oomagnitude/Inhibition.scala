@@ -20,7 +20,7 @@ trait Inhibition {
    * @param overlaps the overlaps on competing poolers
    * @return the indexes of the winning poolers
    */
-  def compete(overlaps: Iterable[Overlap]): Iterable[Int]
+  def compete(overlaps: Iterable[Overlap]): Set[Int]
 }
 
 /**
@@ -31,7 +31,7 @@ trait Inhibition {
 class GlobalInhibition(maxWinners: Int) extends Inhibition {
   import com.oomagnitude.Inhibition._
 
-  override def compete(overlaps: Iterable[Overlap]): Iterable[Int] = {
-    overlaps.toList.sorted(MaxOverlapOrdering).take(maxWinners).map(_.poolerIndex)
+  override def compete(overlaps: Iterable[Overlap]): Set[Int] = {
+    overlaps.toList.sorted(MaxOverlapOrdering).take(maxWinners).map(_.poolerIndex).toSet
   }
 }

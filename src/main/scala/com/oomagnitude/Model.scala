@@ -1,16 +1,15 @@
 package com.oomagnitude
 
 /**
- * Construct for a single-layer model
+ * Construct for a hierarchy of layers stacked vertically on top of one another
  *
- * @param layer the layer in the model
+ * @param layers the layers in the model
  * @param inhibition the inhibition strategy
- * @param winners the winners of the latest inhibition race
  */
-case class Model(layer: Layer, inhibition: Inhibition, winners: Iterable[Int]) {
+case class Model(layers: List[Layer], inhibition: Inhibition) {
 
   /**
-   * Process an input from the layer's sensor by:
+   * Process an input from each layer's sensor by:
    * 1. Computing overlap to input
    * 2. Running the inhibition race
    * 3. Learning the input from winning poolers
@@ -19,8 +18,13 @@ case class Model(layer: Layer, inhibition: Inhibition, winners: Iterable[Int]) {
    * @return the new model state, after inhibition
    */
   def processInput(input: Set[Int]): Model = {
-    val overlaps = layer.overlap(input)
-    val inhibitionWinners = inhibition.compete(overlaps)
-    this.copy(layer = layer.learn(inhibitionWinners, input), winners = inhibitionWinners)
+    var layerInput = input
+    this.copy(layers = layers.map {
+      layer =>
+        val overlaps = layer.overlap(layerInput)
+        val inhibitionWinners = inhibition.compete(overlaps)
+        layerInput = inhibitionWinners
+        layer.learn(inhibitionWinners, input)
+    })
   }
 }
