@@ -1,24 +1,37 @@
-allprojects {
-    apply plugin: 'scala'
-    apply plugin: 'java'
-    apply plugin: 'maven-publish'
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'scala'
 
-    // Solves Intellij error described here: http://stackoverflow.com/questions/25286749/intellij-overrides-scala-additional-compiler-options-when-synced-from-gradle
-    // TODO: remove once IDEA or Gradleware fixes
-    sourceCompatibility = '1.7'
+// Solves Intellij error described here: http://stackoverflow.com/questions/25286749/intellij-overrides-scala-additional-compiler-options-when-synced-from-gradle
+// TODO: remove once IDEA or Gradleware fixes
+sourceCompatibility = '1.7'
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifactId "${project.name}"
-                from components.java
-            }
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId "${project.name}"
+            from components.java
         }
     }
-
-    jar {
-        from sourceSets.main.allSource
-    }
-
-    task install(dependsOn: publishToMavenLocal)
 }
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+jar {
+    from sourceSets.main.allSource
+}
+
+dependencies {
+    runtime "org.scala-lang:scala-compiler:$scalaVersion"
+    compile "org.scala-lang:scala-library:$scalaVersion"
+}
+
+task install(dependsOn: publishToMavenLocal)
+
+scalaConsole.dependsOn(build)
+scalaConsole.dependsOn(test)
+scalaConsole.classpath += sourceSets.main.output
+scalaTestConsole.classpath += sourceSets.test.output

@@ -5,7 +5,7 @@ object Inhibition {
    * Sort overlaps first by raw number of overlapping connections, then by weighted overlaps
    */
   val MaxOverlapOrdering = {
-    val ordering: Ordering[Overlap] = Ordering.by(o => (o.permanentOverlap, o.weightedOverlap))
+    val ordering: Ordering[Overlap] = Ordering.by(o => o.weightedOverlap)
     ordering.reverse
   }
 }

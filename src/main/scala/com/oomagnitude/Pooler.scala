@@ -4,10 +4,10 @@ package com.oomagnitude
  * Amount of overlap that a pooler has with a particular input
  *
  * @param poolerIndex the index of the pooler
- * @param permanentOverlap the number of permanent connections in the pooler that overlap with the input
- * @param weightedOverlap the weighted overlap of connections on the pooler, where each weight is the permanence
+ * @param weightedOverlap the total number of permanent connections overlapping the input, weighted by the ratio of
+ *                        matching to total number of permanent connections.
  */
-case class Overlap(poolerIndex: Int, permanentOverlap: Int, weightedOverlap: Double)
+case class Overlap(poolerIndex: Int, weightedOverlap: Double)
 
 /**
  * Construct for a single coincidence detector (pooler). A pooler has a location (index) and
@@ -47,14 +47,14 @@ case class Pooler(index: Int, connections: Map[Int, Double], permanenceThreshold
    * @return the overlap that this pooler has to the input
    */
   def overlap(input: Set[Int]): Overlap = {
-    // Filter down to only connections that overlap with the input
-    val permanentOverlap = permanentConnections.filterKeys(input.contains)
+    // Count permanent connections that overlap with the input
+    val permanentOverlap = permanentConnections.count(kv => input.contains(kv._1))
     // Compute the weighted overlap, which takes into account the permanence values as well as the ratio of
     // overlapping to total permanent connections on the pooler
     val weightedOverlap =
-      if (permanentConnections.nonEmpty) permanentOverlap.values.sum * permanentOverlap.size / permanentConnections.size
+      if (permanentConnections.nonEmpty) permanentOverlap * permanentOverlap / permanentConnections.size
       else 0.0
-    Overlap(index, permanentOverlap = permanentOverlap.size, weightedOverlap = weightedOverlap)
+    Overlap(index, weightedOverlap = weightedOverlap)
   }
 
 }

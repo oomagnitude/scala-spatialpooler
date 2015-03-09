@@ -1,7 +1,5 @@
 package com
 
-import scala.util.Random
-
 package object oomagnitude {
   /**
    * Function that adjusts permanence. Takes in current permanence value as first input, and boolean indicating whether
@@ -25,14 +23,12 @@ package object oomagnitude {
    * Initial model with randomly initialized connections
    */
   val InitialModel = Model(List(Layer.withRandomConnections(LayerSize, SensorSize, connectionProbability = 0.40)),
-    new GlobalInhibition(maxWinners = 1))
+    new GlobalInhibition(maxWinners = 2))
   
-  val random = new Random()
-
   /**
-   * Encodings for each letter that may be found in a word. Maps the letter to a coordinate in the sensor.
+   * Encodings for each letter that may be found in a word. Maps the letter to an index in the sensor.
    */
-  val LetterEncodings = ('a' to 'z').zip(random.shuffle((0 until SensorSize).toList)).toMap
+  val LetterEncodings = ('a' to 'z').toList.zipWithIndex.toMap
 
   /**
    * Encodes letters in a word as an SDR
@@ -40,9 +36,9 @@ package object oomagnitude {
   val WordEncoder = new WordEncoder(LetterEncodings)
 
   /**
-   * Reverse mapping of coordinates to letters
+   * Reverse mapping of sensor indices to letters
    */
-  val CoordinateToLetter = LetterEncodings.map(_.swap)
+  val IndexToLetter = LetterEncodings.map(_.swap)
 
   /**
    * Train a model on the word dictionary
@@ -65,8 +61,17 @@ package object oomagnitude {
   def inferWord(letters: String, model: Model) = {
     val newModel = model.processInput(WordEncoder.encode(letters))
     val allChars = newModel.layers(0).active.map(c => charsForPooler(c, newModel))
-    val words = allChars.flatMap(cs => cs.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b))).toSet
-    words.toList.sortBy(_.length).foreach(println)
+    allChars.foreach { chars =>
+      println(); println("matching pooler: " + chars)
+      val words = chars.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b)).toList.sortBy(_.length)
+      words.foreach { word =>
+        word.foreach { char =>
+          if (letters.contains(char)) print(Console.RED + char.toString + Console.RESET)
+          else print(char.toString)
+        }
+        println()
+      }
+    }
   }
 
   /**
@@ -77,6 +82,7 @@ package object oomagnitude {
    * @return all characters in the sensors that the pooler has a permanent connection to
    */
   private def charsForPooler(poolerIndex: Int, model: Model): Iterable[Char] = {
-    model.layers(0).poolers(poolerIndex).permanentConnections.keys.map(CoordinateToLetter)
+    val sensoryConnections = model.layers(0).poolers(poolerIndex).permanentConnections.keys
+    sensoryConnections.flatMap(IndexToLetter.get)
   }
 }

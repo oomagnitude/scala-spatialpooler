@@ -61,7 +61,7 @@ case class Layer(poolers: IndexedSeq[Pooler], active: Set[Int]) {
     poolers.map {
       pooler =>
         pooler.overlap(input)
-    }.filter(_.permanentOverlap > 0)
+    }.filter(_.weightedOverlap > 0.0)
   }
 
   /**
