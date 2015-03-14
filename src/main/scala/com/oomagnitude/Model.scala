@@ -1,5 +1,7 @@
 package com.oomagnitude
 
+import com.oomagnitude.rx.Observables.ObservableFactory
+
 /**
  * Construct for a hierarchy of layers stacked vertically on top of one another
  *
@@ -17,16 +19,21 @@ case class Model(layers: List[Layer], inhibition: Inhibition) {
    * @param input the input to process
    * @return the new model state, after inhibition
    */
-  def processInput(input: Set[Int]): Model = {
-    var layerInput = input
-    this.copy(layers = layers.map {
-      layer =>
-        val overlaps = layer.overlap(layerInput)
-        val inhibitionWinners = inhibition.compete(overlaps)
-        val newLayer = layer.learn(inhibitionWinners, layerInput)
+  def processInput(input: Set[Int])(implicit observableFactory: ObservableFactory[(Layer, Set[Int]), Layer]): Model = {
+    def processLayer(kv: (Layer, Set[Int])): Layer = {
+      kv match {
+        case (layer, layerInput) =>
+          val overlaps = layer.overlap(layerInput)
+          val inhibitionWinners = inhibition.compete(overlaps)
+          val newLayer = layer.learn(inhibitionWinners, layerInput)
+          newLayer
+      }
+    }
 
-        layerInput = inhibitionWinners
-        newLayer
-    })
+    val jobs = layers.zip(input :: layers.map(_.active))
+    val observable = observableFactory.parallel(jobs, processLayer)
+    var newLayers = List.empty[Layer]
+    observable.toBlocking.foreach{ layer => newLayers = layer :: newLayers}
+    this.copy(layers = newLayers)
   }
 }

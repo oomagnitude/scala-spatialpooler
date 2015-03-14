@@ -27,6 +27,7 @@ jar {
 dependencies {
     runtime "org.scala-lang:scala-compiler:$scalaVersion"
     compile "org.scala-lang:scala-library:$scalaVersion"
+    compile "io.reactivex:rxscala_2.11:latest.release"
 }
 
 task install(dependsOn: publishToMavenLocal)
@@ -34,4 +35,5 @@ task install(dependsOn: publishToMavenLocal)
 scalaConsole.dependsOn(build)
 scalaConsole.dependsOn(test)
 scalaConsole.classpath += sourceSets.main.output
+scalaConsole.classpath += configurations.compile
 scalaTestConsole.classpath += sourceSets.test.output

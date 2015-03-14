@@ -1,5 +1,9 @@
 package com
 
+import java.util.concurrent.Executors
+
+import com.oomagnitude.rx.Observables.{BlockingObservableFactory, ThreadPoolObservableFactory}
+
 package object oomagnitude {
   /**
    * Function that adjusts permanence. Takes in current permanence value as first input, and boolean indicating whether
@@ -24,7 +28,18 @@ package object oomagnitude {
    */
   val InitialModel = Model(List(Layer.withRandomConnections(LayerSize, SensorSize, connectionProbability = 0.40)),
     new GlobalInhibition(maxWinners = 2))
-  
+
+  /**
+   * Creates observables used in parallel execution of layer processing of inputs
+   */
+  implicit val ObservableFactory = {
+    // Compute the number of threads needed for maximum parallelism. Cap at number of available processors
+    val numThreads = math.min(Runtime.getRuntime.availableProcessors, InitialModel.layers.size)
+
+    if (numThreads > 1) new ThreadPoolObservableFactory[(Layer, Set[Int]), Layer](Executors.newFixedThreadPool(numThreads))
+    else new BlockingObservableFactory[(Layer, Set[Int]), Layer]
+  }
+
   /**
    * Encodings for each letter that may be found in a word. Maps the letter to an index in the sensor.
    */
