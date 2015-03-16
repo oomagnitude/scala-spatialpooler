@@ -59,8 +59,7 @@ case class Layer(poolers: IndexedSeq[Pooler], active: Set[Int]) {
    */
   def overlap(input: Set[Int]): Iterable[Overlap] = {
     poolers.map {
-      pooler =>
-        pooler.overlap(input)
+      pooler => pooler.overlap(input)
     }.filter(_.weightedOverlap > 0.0)
   }
 
