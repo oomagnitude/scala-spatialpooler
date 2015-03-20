@@ -75,18 +75,48 @@ package object oomagnitude {
    */
   def inferWord(letters: String, model: Model) = {
     val newModel = model.processInput(WordEncoder.encode(letters))
-    val allChars = newModel.layers(0).active.map(c => charsForPooler(c, newModel))
+    val allChars = newModel.layers.head.active.map(c => charsForPooler(c, newModel))
     allChars.foreach { chars =>
       println(); println("matching pooler: " + chars)
       val words = chars.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b)).toList.sortBy(_.length)
       words.foreach { word =>
         word.foreach { char =>
-          if (letters.contains(char)) print(Console.RED + char.toString + Console.RESET)
+          if (letters.contains(char)) print(/*Console.RED + */char.toString/* + Console.RESET*/)
           else print(char.toString)
         }
         println()
       }
     }
+  }
+
+  /**
+   * Mash up inferWord to try to translate "noisy" sentences from
+   * http://en.wikipedia.org/wiki/Typoglycemia
+   *
+   * Try
+   * import com.oomagnitude._
+   * val model = train(10000)
+   * translateNoisySentence(<someSentence>, model)
+   *
+   * NRG means not recognized byt the model
+   * UNK means that the model spat out a String but that string didn't match any dictionary entries.
+   *
+   * Probably would work better with an SDR that incorporates letter positioning in the word.
+   *
+   * @param sentence
+   * @param model
+   * @return
+   */
+  def translateNoisySentence(sentence: String, model: Model) = {
+    val words: Array[String] = sentence.split(" ")
+    val translatedSentence = words.map { word =>
+      val newModel = model.processInput(WordEncoder.encode(word))
+      val allStrings = newModel.layers.head.active.map(c => charsForPooler(c, newModel))
+      val firstString = allStrings.headOption
+      val wordList = firstString.map(_.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b)).toList.sortBy(_.length))
+      wordList.fold("NRG")(_.headOption.getOrElse("UNK"))
+    }
+    words.zip(translatedSentence).mkString(" ")
   }
 
   /**
@@ -97,7 +127,7 @@ package object oomagnitude {
    * @return all characters in the sensors that the pooler has a permanent connection to
    */
   private def charsForPooler(poolerIndex: Int, model: Model): Iterable[Char] = {
-    val sensoryConnections = model.layers(0).poolers(poolerIndex).permanentConnections.keys
+    val sensoryConnections = model.layers.head.poolers(poolerIndex).permanentConnections.keys
     sensoryConnections.flatMap(IndexToLetter.get)
   }
 }
