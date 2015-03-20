@@ -78,14 +78,8 @@ package object oomagnitude {
     val allChars = newModel.layers.head.active.map(c => charsForPooler(c, newModel))
     allChars.foreach { chars =>
       println(); println("matching pooler: " + chars)
-      val words = chars.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b)).toList.sortBy(_.length)
-      words.foreach { word =>
-        word.foreach { char =>
-          if (letters.contains(char)) print(/*Console.RED + */char.toString/* + Console.RESET*/)
-          else print(char.toString)
-        }
-        println()
-      }
+      val words = getUniqueWords(chars)
+      words.foreach { word => println(word) }
     }
   }
 
@@ -103,9 +97,9 @@ package object oomagnitude {
    *
    * Probably would work better with an SDR that incorporates letter positioning in the word.
    *
-   * @param sentence
-   * @param model
-   * @return
+   * @param sentence the sentence being translated
+   * @param model the model containing the layer and poolers
+   * @return a string with the translated sequence
    */
   def translateNoisySentence(sentence: String, model: Model) = {
     val words: Array[String] = sentence.split(" ")
@@ -113,10 +107,20 @@ package object oomagnitude {
       val newModel = model.processInput(WordEncoder.encode(word))
       val allStrings = newModel.layers.head.active.map(c => charsForPooler(c, newModel))
       val firstString = allStrings.headOption
-      val wordList = firstString.map(_.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b)).toList.sortBy(_.length))
+      val wordList = firstString.map(chars => getUniqueWords(chars))
       wordList.fold("NRG")(_.headOption.getOrElse("UNK"))
     }
     words.zip(translatedSentence).mkString(" ")
+  }
+
+  /**
+   * Given a set of characters, find all words in the dictionary that contain all those characters
+   *
+   * @param chars the chars that must all be in matching words
+   * @return the unique list of words containing the chars, sorted by word length (ascending)
+   */
+  private def getUniqueWords(chars: Iterable[Char]): List[String] = {
+    chars.map(Dictionary.ReverseIndex).reduce((a, b) => a.intersect(b)).toList.sortBy(_.length)
   }
 
   /**
